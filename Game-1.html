@@ -482,11 +482,15 @@
     </div>
   </div>
 
-  <!-- Fullscreen Button -->
-  <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()">
-    <span id="fsIcon">⛶</span>
-    <span id="fsLabel">Tela Cheia</span>
-  </button>
+  <!-- Save indicator + Fullscreen -->
+  <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+    <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()" style="flex:1; margin-top:0;">
+      <span id="fsIcon">⛶</span>
+      <span id="fsLabel">Tela Cheia</span>
+    </button>
+    <button class="btn-fullscreen" onclick="clearSave()" style="margin-top:0; flex:0 0 auto; padding:10px 14px; color:#5a2020; border-color:#2a1010;" title="Apagar progresso salvo">🗑</button>
+  </div>
+  <div id="saveIndicator" style="text-align:center; font-size:0.65rem; letter-spacing:2px; color:#3a2a0a; font-family:'Cinzel',serif; text-transform:uppercase; height:16px; margin-top:6px;"></div>
 </div>
 
 <script>
@@ -646,6 +650,7 @@ function victory() {
   }
 
   updateUI();
+  saveGame();
 
   document.getElementById('combatView').style.display = 'none';
   document.getElementById('winMsg').textContent = `${enemy.name} derrotado! +${enemy.xp} XP e 🪙${enemy.gold} ouro.`;
@@ -705,7 +710,42 @@ function roll(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function toggleFullscreen() {
+const SAVE_KEY = 'dungeonquest_save';
+
+function saveGame() {
+  const state = { hero, enemyIndex };
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  showSaveIndicator('✦ Progresso salvo');
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!state.hero || state.enemyIndex === undefined) return false;
+    hero = state.hero;
+    enemyIndex = state.enemyIndex;
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearSave() {
+  if (!confirm('Apagar o progresso salvo e recomeçar do zero?')) return;
+  localStorage.removeItem(SAVE_KEY);
+  newGame();
+}
+
+let saveIndicatorTimer;
+function showSaveIndicator(msg) {
+  const el = document.getElementById('saveIndicator');
+  el.textContent = msg;
+  el.style.color = '#5a4020';
+  clearTimeout(saveIndicatorTimer);
+  saveIndicatorTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+
   const el = document.documentElement;
   const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
 
@@ -730,7 +770,24 @@ function updateFsButton() {
   document.getElementById('fsLabel').textContent = isFs ? 'Sair da Tela Cheia' : 'Tela Cheia';
 }
 
-newGame();
+// Init: load save or start fresh
+(function init() {
+  const saved = loadGame();
+  if (saved) {
+    gameActive = true;
+    document.getElementById('winOverlay').classList.remove('active');
+    document.getElementById('loseOverlay').classList.remove('active');
+    document.getElementById('combatView').style.display = 'block';
+    clearLog();
+    log("✦ Progresso restaurado — bem-vindo de volta, aventureiro.", "system");
+    spawnEnemy();
+    updateUI();
+    setButtons(true);
+    showSaveIndicator('✦ Jogo carregado');
+  } else {
+    newGame();
+  }
+})();
 </script>
 </body>
 </html>
