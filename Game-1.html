@@ -345,6 +345,50 @@
     margin: 12px 0;
   }
 
+  /* Fullscreen button */
+  .btn-fullscreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #2a1a05;
+    border-radius: 3px;
+    color: #5a4020;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-fullscreen:hover {
+    border-color: rgba(201,168,76,0.3);
+    color: var(--gold);
+  }
+  #fsIcon { font-size: 1rem; }
+
+  /* Fullscreen mode styles */
+  :fullscreen body,
+  :-webkit-full-screen body,
+  :-moz-full-screen body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--dark);
+  }
+
+  :fullscreen .game-wrapper,
+  :-webkit-full-screen .game-wrapper,
+  :-moz-full-screen .game-wrapper {
+    max-width: 760px;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
   /* Responsive */
   @media (max-width: 480px) {
     .stats-grid { grid-template-columns: 1fr; }
@@ -437,6 +481,12 @@
       <button class="btn btn-flee" id="btnFlee" onclick="playerAction('flee')">↩ Fugir</button>
     </div>
   </div>
+
+  <!-- Fullscreen Button -->
+  <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()">
+    <span id="fsIcon">⛶</span>
+    <span id="fsLabel">Tela Cheia</span>
+  </button>
 </div>
 
 <script>
@@ -655,7 +705,32 @@ function roll(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function toggleFullscreen() {
+  const el = document.documentElement;
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+
+  if (!isFs) {
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', updateFsButton);
+document.addEventListener('webkitfullscreenchange', updateFsButton);
+document.addEventListener('mozfullscreenchange', updateFsButton);
+
+function updateFsButton() {
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+  document.getElementById('fsIcon').textContent = isFs ? '✕' : '⛶';
+  document.getElementById('fsLabel').textContent = isFs ? 'Sair da Tela Cheia' : 'Tela Cheia';
+}
+
 newGame();
 </script>
 </body>
-</html> 
+</html>
